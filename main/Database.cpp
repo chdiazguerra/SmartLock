@@ -23,7 +23,7 @@ void Database::transaction(){
   if (errType){
     return;
   }
-    
+  Serial.println(sql);  
   errType = sqlite3_exec(db, sql, callback, (void*)data, &zErrMsg);
   
   if (errType != SQLITE_OK){
@@ -55,19 +55,61 @@ int Dataphone::verify(const String &phone){
   return res;
 }
 
+int Dataphone::addPhone(const char *newphone){
+  sprintf(sql, "INSERT INTO phones VALUES ('%s')", newphone);
+  transaction();
+  return errType;
+}
+
+int Dataphone::deletePhone(const char *phone){
+  sprintf(sql, "DELETE FROM phones WHERE phone='%s'", phone);
+  transaction();
+  return errType;
+}
+
 ////////Datausers///////////
-int Datausers::verifyUser(const String &user, const String &pass){
-  sprintf(sql, "SELECT * FROM usuarios WHERE user='%s' AND pass='%s'", user.c_str(), pass.c_str());
+int Datausers::verifyUser(const char *user, const char *pass){
+  sprintf(sql, "SELECT * FROM usuarios WHERE user='%s' AND pass='%s'", user, pass);
   transaction();
   int res = rowsRetrieved ? CORRECT_DATA : (errType ? errType : INCORRECT_DATA);
   rowsRetrieved = 0;
   return res;
 }
 
-int Datausers::verifyPermission(const String &user, const char &type){
-  sprintf(sql, "SELECT * FROM usuarios WHERE user='%s' AND %c=1", user.c_str(), type);
+int Datausers::verifyPermission(const char *user, const char &type){
+  sprintf(sql, "SELECT * FROM usuarios WHERE user='%s' AND `%c`=1", user, type);
   transaction();
   int res = rowsRetrieved ? ALLOWED : (errType ? errType : DENIED);
   rowsRetrieved = 0;
   return res;
+}
+
+int Datausers::newUser(const char *newuser, const char *newpass){
+  sprintf(sql, "INSERT INTO usuarios (user, pass) VALUES ('%s', '%s')", newuser, newpass);
+  transaction();
+  return errType;
+}
+
+int Datausers::changePass(const char *user, const char *newpass){
+  sprintf(sql, "UPDATE usuarios SET pass='%s' WHERE user='%s'", newpass, user);
+  transaction();
+  return errType;
+}
+
+int Datausers::deleteUser(const char *user){
+  sprintf(sql, "DELETE FROM usuarios WHERE user='%s'", user);
+  transaction();
+  return errType;
+}
+
+int Datausers::addPermission(const char *user, const char &type){
+  sprintf(sql, "UPDATE usuarios SET `%c`=1 WHERE user='%s'", type, user);
+  transaction();
+  return errType;
+}
+
+int Datausers::revokePermission(const char *user, const char &type){
+  sprintf(sql, "UPDATE usuarios SET `%c`=0 WHERE user='%s'", type, user);
+  transaction();
+  return errType;
 }
