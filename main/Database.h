@@ -49,7 +49,7 @@ class Dataphone : public Database{
      * Verifica que el numero de telefono esta en la base de datos
      * @param phone numero de telefono a verificar
      */
-    int verify(const String &phone);
+    int verify(const char *phone);
 
     /**
      * Agrega un nuevo numero de telefono a la base de datos

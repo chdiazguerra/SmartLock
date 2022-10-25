@@ -47,8 +47,8 @@ int Database::callback(void *data, int argc, char **argv, char **azColName){
 
 
 //////////Dataphone/////////
-int Dataphone::verify(const String &phone){
-  sprintf(sql, "SELECT * FROM phones WHERE phone='%s'", phone.c_str());
+int Dataphone::verify(const char *phone){
+  sprintf(sql, "SELECT * FROM phones WHERE phone='%s'", phone);
   transaction();
   int res = rowsRetrieved ? ALLOWED : (errType ? errType : DENIED);
   rowsRetrieved = 0;
