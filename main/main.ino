@@ -1,22 +1,18 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <vfs.h>
 #include <SPI.h>
 #include <SoftwareSerial.h>
+#include "SD.h"
+#include <FS.h>
 
 #include "Database.h" 
 #include "Controlador.h"
 #include "Vista.h"
 
-#define RXSIM 0 //D3
-#define TXSIM 16 //D0
-
-SoftwareSerial sim(RXSIM, TXSIM);
-
 LiquidCrystal_I2C lcd(0x3F,16,2);
 
-Datausers dbUsers("/SD0/datausers.db");
-Dataphone dbPhones("/SD0/phones.db");
+Datausers dbUsers("/sd/datausers.db");
+Dataphone dbPhones("/sd/phones.db");
 
 Vista vista(&lcd);
 Controlador controlador(NULL, &vista, &dbUsers, &dbPhones);
@@ -26,34 +22,34 @@ bool activo = false;
 char phoneCall[20] = {'\0'};
 
 void setup() {
-  Serial.begin(9600);
-  sim.begin(4800);
+  Serial.begin(115200);
+  Serial2.begin(9600);  //SIM
   SPI.begin();
-  vfs_mount("/SD0", 15);
+  SD.begin();
   sqlite3_initialize();
   lcd.init();
   delay(1000);
   controlador.changeState(new StateA);
 
   //Handshake SIM
-  sim.println("AT");
+  Serial2.println("AT");
   delay(500);
-  sim.println("AT+CLIP=1");
+  Serial2.println("AT+CLIP=1");
   delay(500);
-  while (sim.available()){
-    sim.readString();
+  while (Serial2.available()){
+    Serial2.readString();
     delay(200);
   }
 }
 
 void loop() {
   //Manejo de llamadas
-  if (sim.available()){
-    String message = sim.readStringUntil('\r');
+  if (Serial2.available()){
+    String message = Serial2.readStringUntil('\r');
     message.trim();
     bool correctLine = message.startsWith("+CLIP");
     if (correctLine){
-      sim.println("ATH");
+      Serial2.println("ATH");
       delay(200);
       Serial.println("CORRECTA");
       Serial.println(message);
