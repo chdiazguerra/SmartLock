@@ -6,6 +6,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
+#include <Keypad.h>
 #include <queue>
 
 //Propios
@@ -44,9 +45,27 @@ char phoneCall[20] = {'\0'};
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
 const String id_admin = "ID";
 
+//KEYPAD
+const byte ROWS = 4; //four rows
+const byte COLS = 4; //three columns
+char keys[ROWS][COLS] = {
+  {'1','2','3', 'A'},
+  {'4','5','6', 'B'},
+  {'7','8','9', 'C'},
+  {'*','0','#', 'D'}
+};
+
+byte rowPins[ROWS] = {15, 2, 0, 4}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {13, 12, 14, 27}; //connect to the column pinouts of the keypad
+
+char key;
+
+Keypad pad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 unsigned long bot_lasttime; // last time messages' scan has been done
+
 
 void setup() {
   Serial.begin(115200);
@@ -131,13 +150,13 @@ void Task1Code(void *pvParameters){
       activo = false;
       controlador.off();
     }
-    if (Serial.available()){
+
+    //Manejo Keypad
+    key = pad.getKey();
+    if (key){
       timestamp = millis();
       activo = true;
-      char in = Serial.read();
-      if (in != '\r' && in != '\n'){
-        controlador.newInput(in);
-      }
+      controlador.newInput(key);
     }
   
     delay(200);
