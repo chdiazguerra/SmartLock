@@ -8,6 +8,7 @@
 #include <UniversalTelegramBot.h>
 #include <Keypad.h>
 #include <queue>
+#include <mutex>
 
 //Propios
 #include "Database.h" 
@@ -25,6 +26,7 @@ TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 std::queue<String> admin_messages;
+std::mutex mtx;
 
 LiquidCrystal_I2C lcd(0x3F,16,2);
 
@@ -32,7 +34,7 @@ Datausers dbUsers("/sd/datausers.db", &admin_messages);
 Dataphone dbPhones("/sd/phones.db", &admin_messages);
 
 Vista vista(&lcd);
-Controlador controlador(NULL, &vista, &dbUsers, &dbPhones);
+Controlador controlador(NULL, &vista, &dbUsers, &dbPhones, &mtx);
 
 //LCD automatic off
 unsigned long timestamp = 0;
@@ -74,6 +76,9 @@ void setup() {
   SD.begin();
   sqlite3_initialize();
   lcd.init();
+  pinMode(32, OUTPUT); //RELE
+  delay(200);
+  digitalWrite(32, HIGH);
   delay(1000);
   controlador.changeState(new StateA);
 
@@ -111,8 +116,8 @@ void setup() {
   }
   Serial.println(now);
 
-  xTaskCreatePinnedToCore(Task1Code, "Task1", 10000, NULL, 1, &Task1, 0);
-  xTaskCreatePinnedToCore(Task2Code, "Task2", 10000, NULL, 1, &Task2, 1);
+  xTaskCreatePinnedToCore(Task1Code, "Task1", 10000, NULL, 1, &Task1, 1);
+  xTaskCreatePinnedToCore(Task2Code, "Task2", 10000, NULL, 1, &Task2, 0);
 }
 
 //Teclado y llamada
@@ -287,6 +292,11 @@ bool isNumber(char *s)
 }
 
 void transaction(const char *user, const char *pass, const char &op, const char *p1, const char *p2, const String& id){
+  if(!mtx.try_lock()){
+    bot.sendMessage(id, "Ocupado. Espere por favor...", "");
+    mtx.lock();
+  }
+  
   dbUsers.setIdTransaction(String(user));
   dbPhones.setIdTransaction(String(user));
   int resp = dbUsers.verifyUser(user, pass);
@@ -357,4 +367,5 @@ void transaction(const char *user, const char *pass, const char &op, const char 
   bot.sendMessage(id, head, "");
   dbUsers.setIdTransaction("");
   dbPhones.setIdTransaction("");
+  mtx.unlock();
 }

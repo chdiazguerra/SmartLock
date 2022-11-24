@@ -2,6 +2,7 @@
 #define CONTROLADOR_H
 
 #include <Arduino.h>
+#include <mutex>
 #include "Vista.h"
 #include "Database.h"
 
@@ -27,9 +28,12 @@ class Controlador{
     char _type;
     //Resultado de la operacion
     int _resOp;
+    //Mutex
+    std::mutex *_mtx;
+    bool mtx_taken;
   
     //Constructor
-    Controlador(State *state, Vista *vista, Datausers *datausers, Dataphone *dataphone);
+    Controlador(State *state, Vista *vista, Datausers *datausers, Dataphone *dataphone, std::mutex *mtx);
     //Destructor
     ~Controlador();
 

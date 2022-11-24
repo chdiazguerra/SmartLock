@@ -24,6 +24,10 @@ void StateA::initState(){
   _controlador->updatePass(empty);
   _controlador->_datausers->setIdTransaction("");
   _controlador->_dataphone->setIdTransaction("");
+  if(_controlador->mtx_taken){
+    _controlador->_mtx->unlock();
+    _controlador->mtx_taken = false;
+  }
 }
 
 void StateA::newInput(const char &in){
@@ -37,6 +41,14 @@ void StateA::newInput(const char &in){
 void StateB::initState(){
   Serial.println("ESTADO B");
   _controlador->_vista->on();
+  if (!_controlador->_mtx->try_lock()){
+    _controlador->_vista->changeHead("Ocupado");
+    Serial.println("Ocupado");
+    delay(2000);
+    _controlador->changeState(new StateA);
+    return;
+  }
+  _controlador->mtx_taken = true;
   _controlador->_vista->changeHead("Usuario?(4 nums)");
 }
 
@@ -204,6 +216,10 @@ void StateEnd::initState(){
   _controlador->_vista->changeHead(head);
   _controlador->_datausers->setIdTransaction("");
   _controlador->_dataphone->setIdTransaction("");
+  if(_controlador->mtx_taken){
+    _controlador->_mtx->unlock();
+    _controlador->mtx_taken = false;
+  }
 }
 
 void StateEnd::newInput(const char &in){
@@ -624,11 +640,13 @@ void State7::accepted(){
 
 
 ///////////CONTROLADOR////////////////
-Controlador::Controlador(State *state, Vista *vista, Datausers *datausers, Dataphone *dataphone){
+Controlador::Controlador(State *state, Vista *vista, Datausers *datausers, Dataphone *dataphone, std::mutex *mtx){
   _state = state;
   _vista = vista;
   _datausers = datausers;
   _dataphone = dataphone;
+  _mtx = mtx;
+  mtx_taken = false;
 }
 
 Controlador::~Controlador(){
@@ -667,6 +685,8 @@ void Controlador::updateType(char type){
 
 void Controlador::relayOn(){
   Serial.println("RELE ACTIVADO");
+  digitalWrite(32, LOW);
   delay(500);
+  digitalWrite(32, HIGH);
   Serial.println("RELE DESACTIVADO");
 }
