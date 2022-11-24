@@ -2,8 +2,11 @@
 
 int Database::rowsRetrieved = 0;
 
-Database::Database(const String dbName){
+Database::Database(const String dbName, std::queue<String> *p_fifo){
   filename = dbName;
+  fifo = p_fifo;
+  message_temp = "";
+  idTransaction = "";
 }
 
 
@@ -35,7 +38,12 @@ void Database::transaction(){
     Serial.println("CORRECT");
     Serial.print("NUMBER: ");
     Serial.println(rowsRetrieved);
+
+    if (message_temp.length()){
+      pushMessage(message_temp);
+    }
   }
+  message_temp = "";
 
   sqlite3_close(db);
 }
@@ -45,6 +53,13 @@ int Database::callback(void *data, int argc, char **argv, char **azColName){
   return 0;
 }
 
+void Database::setIdTransaction(const String &id){
+  idTransaction = id;
+}
+
+void Database::pushMessage(const String &message){
+  fifo->push(idTransaction+ " " + message);
+}
 
 //////////Dataphone/////////
 int Dataphone::verify(const char *phone){
@@ -57,12 +72,14 @@ int Dataphone::verify(const char *phone){
 
 int Dataphone::addPhone(const char *newphone){
   sprintf(sql, "INSERT INTO phones VALUES ('%s')", newphone);
+  message_temp = "agrego numero de telefono " + String(newphone);
   transaction();
   return errType;
 }
 
 int Dataphone::deletePhone(const char *phone){
   sprintf(sql, "DELETE FROM phones WHERE phone='%s'", phone);
+  message_temp = "elimino numero de telefono " + String(phone);
   transaction();
   return errType;
 }
@@ -86,30 +103,35 @@ int Datausers::verifyPermission(const char *user, const char &type){
 
 int Datausers::newUser(const char *newuser, const char *newpass){
   sprintf(sql, "INSERT INTO usuarios (user, pass) VALUES ('%s', '%s')", newuser, newpass);
+  message_temp = "agrego usuario " + String(newuser);
   transaction();
   return errType;
 }
 
 int Datausers::changePass(const char *user, const char *newpass){
   sprintf(sql, "UPDATE usuarios SET pass='%s' WHERE user='%s'", newpass, user);
+  message_temp = "cambio clave de usuario " + String(user);
   transaction();
   return errType;
 }
 
 int Datausers::deleteUser(const char *user){
   sprintf(sql, "DELETE FROM usuarios WHERE user='%s'", user);
+  message_temp = "elimino usuario " + String(user);
   transaction();
   return errType;
 }
 
 int Datausers::addPermission(const char *user, const char &type){
   sprintf(sql, "UPDATE usuarios SET `%c`=1 WHERE user='%s'", type, user);
+  message_temp = "le dio permiso " + String(type)+ "a usuario" + String(user);
   transaction();
   return errType;
 }
 
 int Datausers::revokePermission(const char *user, const char &type){
   sprintf(sql, "UPDATE usuarios SET `%c`=0 WHERE user='%s'", type, user);
+  message_temp = "quito permiso " + String(type) + "a usuario" + String(user);
   transaction();
   return errType;
 }

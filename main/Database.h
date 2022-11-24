@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <sqlite3.h>
+#include <queue>
 
 #define CORRECT_DATA 29
 #define INCORRECT_DATA 30
@@ -20,6 +21,11 @@ class Database{
     int errType;
     //Comando de la trasaccion
     char sql[200];
+    //Bot de telegram
+    String message_temp;
+    std::queue<String> *fifo;
+    String idTransaction;
+        
     //Variables necesarias (no se ocupan)
     char *zErrMsg = 0;
     const char* data;
@@ -33,18 +39,27 @@ class Database{
     //Numero de filas dadas por la transaccion (solo util en verify)
     static int rowsRetrieved;
     //Constructor
-    Database(const String dbName);
+    Database(const String dbName, std::queue<String> *p_fifo);
     /**
      * Permite realizar la transaccion utilizando el atributo sql
      */
     void transaction();
+    /**
+     * Setea el identificador del usuario que hace la transaccion
+     */
+    void setIdTransaction(const String &id);
+    /**
+     * Agrega mensaje de la transaccion en la cola
+     */
+    void pushMessage(const String &message);
+    
     //Callback de la transaccion
     static int callback(void *data, int argc, char **argv, char **azColName);
 };
 
 class Dataphone : public Database{
   public:
-    Dataphone(const String dbName) : Database(dbName){};
+    Dataphone(const String dbName, std::queue<String> *p_fifo) : Database(dbName, p_fifo){};
     /**
      * Verifica que el numero de telefono esta en la base de datos
      * @param phone numero de telefono a verificar
@@ -64,7 +79,7 @@ class Dataphone : public Database{
 
 class Datausers : public Database{
   public:
-    Datausers(const String dbName) : Database(dbName){};
+    Datausers(const String dbName, std::queue<String> *p_fifo) : Database(dbName, p_fifo){};
     /**
     * Verifica los datos del usuario
     * @param user Nombre de usuario

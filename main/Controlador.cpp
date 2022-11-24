@@ -22,6 +22,8 @@ void StateA::initState(){
   char empty[5] = {'\0','\0', '\0', '\0', '\0'};
   _controlador->updateUser(empty);
   _controlador->updatePass(empty);
+  _controlador->_datausers->setIdTransaction("");
+  _controlador->_dataphone->setIdTransaction("");
 }
 
 void StateA::newInput(const char &in){
@@ -153,6 +155,8 @@ void StateD::accepted(){
     int resOp = _controlador->_datausers->verifyPermission(_controlador->_user, _controlador->_type);
     _controlador->_resOp = resOp;
     if (resOp==ALLOWED){
+      _controlador->_datausers->setIdTransaction(_controlador->_user);
+      _controlador->_dataphone->setIdTransaction(_controlador->_user);
       if (type=='0'){
         _controlador->changeState(new State0);
       } else if (type=='1') {
@@ -198,6 +202,8 @@ void StateEnd::initState(){
     head = "Hecho";
   }
   _controlador->_vista->changeHead(head);
+  _controlador->_datausers->setIdTransaction("");
+  _controlador->_dataphone->setIdTransaction("");
 }
 
 void StateEnd::newInput(const char &in){
@@ -216,6 +222,7 @@ void StateEnd::accepted(){
 ////////State0///////////
 void State0::initState(){
   _controlador->relayOn();
+  _controlador->_datausers->pushMessage(" abrio la cerradura");
   _controlador->_resOp = 0;
   _controlador->changeState(new StateEnd);
 }
