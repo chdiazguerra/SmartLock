@@ -42,7 +42,7 @@ char phoneCall[20] = {'\0'};
 
 //Telegram bot variables
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
-const String id_admin = "***REMOVED***";
+const String id_admin = "ID";
 
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
