@@ -15,10 +15,10 @@
 
 
 // Wifi network station credentials
-#define WIFI_SSID "Christian"
-#define WIFI_PASSWORD "***REMOVED***"
+#define WIFI_SSID "SSID"
+#define WIFI_PASSWORD "PASS"
 // Telegram BOT Token (Get from Botfather)
-#define BOT_TOKEN "***REMOVED***"
+#define BOT_TOKEN "TOKEN"
 
 TaskHandle_t Task1;
 TaskHandle_t Task2;
